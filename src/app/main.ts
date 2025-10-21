@@ -19,10 +19,14 @@ async function bootstrap() {
   );
 
   setupSwagger(app, configService);
-  app.useGlobalPipes(
-    new DecodeBodyPipe(),
-    new ValidationPipe({ transform: true })
-  );
+  
+  const globalPipes = [
+    ...(configService.get<string>('BODY-DATA-ENCRYPTION')?.toLowerCase() == "true" ? [new DecodeBodyPipe()] : []),
+    new ValidationPipe({ transform: true }),
+  ];
+
+  app.useGlobalPipes(...globalPipes);
+
   await app.listen(configService.get('APP-PORT') ?? 8173);
 }
 
