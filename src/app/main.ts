@@ -5,6 +5,7 @@ import { setupSwagger } from './lib';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { ValidationPipe } from '@nestjs/common';
 import { DecodeBodyPipe } from '@/common/pipe';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,13 +20,18 @@ async function bootstrap() {
   );
 
   setupSwagger(app, configService);
-  
+
   const globalPipes = [
     ...(configService.get<string>('BODY-DATA-ENCRYPTION')?.toLowerCase() == "true" ? [new DecodeBodyPipe()] : []),
-    new ValidationPipe({ transform: true }),
+    new ValidationPipe({ 
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
   ];
 
   app.useGlobalPipes(...globalPipes);
+  app.use(helmet())
 
   await app.listen(configService.get('APP-PORT') ?? 8173);
 }
